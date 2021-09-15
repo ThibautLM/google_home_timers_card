@@ -100,6 +100,7 @@ class GoogleTimersCard extends HTMLElement {
 
     const STATE_UNKNOWN = "unknown"
     const STATE_UNAVAILABLE = "unavailable"
+    const STATE_SET = "set";
     const DEFAULT_ICON = "mdi:timer-sand"
 
     // STRINGS
@@ -115,6 +116,7 @@ class GoogleTimersCard extends HTMLElement {
     const JSON_LOCAL_TIME_ISO = "local_time_iso";
     const JSON_FIRE_TIME = "fire_time"
     const JSON_NAME = "label";
+    const JSON_ALARM_STATUS = "status";
 
     // ICONS
     const ICON_ALARM = "mdi:alarm";
@@ -212,18 +214,36 @@ class GoogleTimersCard extends HTMLElement {
 
         // If a label is set then it displays it else it shows nothing.
         if (alarm[JSON_NAME]) {
-          alarm_name = "<div style='margin: 0 15px 0 15px;'><span class='title'><ha-icon style='padding: 0 3px 0 0; --mdc-icon-size: 1.1em;' icon='" + ICON_LABEL + "'></ha-icon>" + alarm[JSON_NAME] + "</span></div>"
+          if(!this.config.hide_inactive_alarms){    //If hide_inactive_alarms = True then check if alarm is active (SET)
+            alarm_name = "<div style='margin: 0 15px 0 15px;'><span class='title'><ha-icon style='padding: 0 3px 0 0; --mdc-icon-size: 1.1em;' icon='" + ICON_LABEL + "'></ha-icon>" + alarm[JSON_NAME] + "</span></div>"
+            html += `
+            <div>
+              ${alarm_name}
+              <div class="info" style="margin: -5px 0 -5px;">
+                <div class="icon"><ha-icon style="padding: 0 5px 0 0; --mdc-icon-size: 24px;" icon="${alarm_icon}"></ha-icon></div>
+                <div class="alarm">${formatted_time}<span class="next">${alarm_next}${recurrence}</span></div>
+              </div>
+            </div>
+            `;
+        }else if(alarm[JSON_ALARM_STATUS] === STATE_SET){
+            alarm_name = "<div style='margin: 0 15px 0 15px;'><span class='title'><ha-icon style='padding: 0 3px 0 0; --mdc-icon-size: 1.1em;' icon='" + ICON_LABEL + "'></ha-icon>" + alarm[JSON_NAME] + "</span></div>"
+            html += `
+            <div>
+              ${alarm_name}
+              <div class="info" style="margin: -5px 0 -5px;">
+                <div class="icon"><ha-icon style="padding: 0 5px 0 0; --mdc-icon-size: 24px;" icon="${alarm_icon}"></ha-icon></div>
+                <div class="alarm">${formatted_time}<span class="next">${alarm_next}${recurrence}</span></div>
+              </div>
+            </div>
+            `;
         }
-
-        html += `
-        <div>
-          ${alarm_name}
-          <div class="info" style="margin: -5px 0 -5px;">
-            <div class="icon"><ha-icon style="padding: 0 5px 0 0; --mdc-icon-size: 24px;" icon="${alarm_icon}"></ha-icon></div>
-            <div class="alarm">${formatted_time}<span class="next">${alarm_next}${recurrence}</span></div>
-          </div>
-        </div>
+       }else{
+        html = `
+        <div class="hide_inactive_alarms"></div>
         `;
+       }
+
+
       }
 
       for (const timer of timers) {
@@ -243,7 +263,7 @@ class GoogleTimersCard extends HTMLElement {
           timer_icon = ICON_ALARM_DONE
         }
 
-        // If show_fire_time is true then it displays the time when the alarm will fire.
+        // If  is true then it displays the time when theshow_fire_time alarm will fire.
         if (this.config.show_fire_time) {
           alarm_time = "<span class='duration'><ha-icon style='padding: 0 3px 0 0; --mdc-icon-size: 1.1em;' icon='" + ICON_ALARM_TIME + "'></ha-icon>" + timer[JSON_LOCAL_TIME].split(" ")[1] + "</span>"
         }
